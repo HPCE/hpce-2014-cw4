@@ -1391,7 +1391,8 @@ You may find it confusing due to the abstraction of
 the `cl::Buffer`, but it helps if you think of them
 as a special kind of pointer. For example, imagine
 `buffState` and `buffBuffer` have notional addresses
-0x4000 and 0x8000 on the GPU. Then what happens is:
+0x4000 and 0x8000 on the GPU. Then what happens
+for n=2 is:
 
     buffState = (void*)0x4000;
 	buffBuffer = (void*)0x8000;
@@ -1405,37 +1406,25 @@ as a special kind of pointer. For example, imagine
 	
 	swap(buffState, buffBuffer); // swaps the values of the pointers
 	
-	// loop iteration t=0
+	// loop iteration t=1
 	// buffState==0x8000, buffBuffer==0x4000
 	
 	kernel(..., input = buffState (0x8000), output = buffBuffer (0x4000))
 	
 	swap(buffState, buffBuffer);
 	
+	// After loop
+	// buffState==0x4000, buffBuffer==0x8000
 	
+	memcpy(buffState, outputState, ...);
 	
+I highly reccommend you try this with n=1, n=2, and n=3,
+as it is easy to think this is working for n=1 when it fails
+for larger numbers.
 
-Depending on your platform, you should now see a reasonable
+Depending on your platform, you may now start to see a reasonable
 speed-up over software (though probably still not over TBB).
-On my computer, I get:
 
-	dt10@TOTO /cygdrive/e/_dt10_/documents/teaching/2013/hpce/cw/CW4-opencl
-	$ time (cat world.txt | bin/step_world_v4_double_buffered 0.1 1000 > /dev/null)
-	Loaded world with w=1024, h=1024
-	Stepping by dt=0.1 for n=1000
-	Found 1 platforms
-	  Platform 0 : Advanced Micro Devices, Inc.
-	Choosing platform 0
-	Found 2 devices
-	  Device 0 : Caicos
-	  Device 1 :         Intel(R) Core(TM) i7-2600 CPU @ 3.40GHz
-	Choosing device 0
-
-	real    0m19.922s
-	user    0m18.297s
-	sys     0m0.919s
-
-This reduces the non-IO execution time down to 19.9-15.4 = 4.5 seconds, for a 1.84x speedup.
 
 Optimising memory accesses
 ==================
@@ -1539,6 +1528,11 @@ a potentially significant cost.
 Deliverables
 ============
 
+Clean your directory of object files and executables, making sure
+not to delete the .cpp and .cl files. I'd prefer if you left the
+build artefacts (makefiles, projects) in, as it is useful to
+see how you have handled it, but this is not part of the marks.
+
 So you should end up with the following set of files that you have
 created:
 
@@ -1565,6 +1559,8 @@ numerical differences due to the single-precision arithmetic,
 there should be no major differences in the output over
 time.
 
+Zip up your directory, and submit it via blackboard.
+
 Compatibility patches
 =====================
 
@@ -1578,11 +1574,12 @@ is a pre-processor flag which disables it:
     #define CL_USE_DEPRECATED_OPENCL_1_1_APIS 
 
 which can either be set in the compiler, or added to source
-files.
+files. Thanks to Henry Poulton and Robert Bishop for
+pointing out the problem, and the fix.
 
 ### Compiling under MacOS
 
-Using the option:
+Tony Liu notes that adding the option:
 
     -framework OpenCL
 
@@ -1592,7 +1589,7 @@ and linker directories.
 ### Missing alloca.h
 
 Windows doesn't have a version of <alloca.h>, so if necessary
-just comment it out.
+just comment it out. Thanks to Henry Poulton.
 
 Debugging tips
 ==============
@@ -1614,6 +1611,11 @@ and after that it is possible to use printf. Note
 that the printf output from different GPU threads
 may become interleaved - they are executing truly
 in parallel, after all.
+
+In NVidia platforms you may be less lucky, as they try to keep
+some functionality CUDA-only for business reasons. However,
+you can always try using a software OpenCL implementation
+for testing purposes. Thanks to Richard Evans.
 
 ### Software implementations
 
