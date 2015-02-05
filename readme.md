@@ -15,6 +15,8 @@ The overall goals of this coursework are to:
 
 - Look at some simple techniques for improving GPU performance
 
+- Explore remote GPU instances via AWS
+
 This coursework alone is not intended to make you a GPU
 expert. You should know how to create an OpenCL program
 from scratch by the end, but the performance you get
@@ -79,6 +81,21 @@ days, but the SDK may not be installed. I would imagine you
 can bring the SDK over with whatever package managed OSX
 has, as Apple are very integrated into the whole OpenCL thing.
 
+Apparently, adding the option:
+
+    -framework OpenCL
+
+to your compilation may help when trying to sort out header
+and linker directories.
+
+### AWS
+
+I've created an image for AWS which has OpenCL set up,
+both for software and the GPU. The title of the image
+is `HPCE-2014-GPU-Image`, which can be selected when
+you launch an AWS instance. The steps for reproducing
+are [available](aws_setup.md), but it isn't much fun
+recreating it.
 
 The Heat World code
 ===================
@@ -152,7 +169,7 @@ will keep their value of 1 as time progresses. However,
 surrounding cells will change temperature in response to
 the cells around them.
 
-Now advance the world, but a single time-step of length 0.1 seconds:
+Now advance the world by a single time-step of length 0.1 seconds:
 
 	make_world.exe 10 0.1 | step_world 0.1 1
 
@@ -521,7 +538,7 @@ OpenCL C++ wrappers. These bindings come from
 `CL/cl.hpp`, and are installed in most recent
 OpenCL SDKs, but just in case, there is a version
 in the `include` directory too. The functions provided
-by this header are all documented at the [Khronos site][1].
+by this header are all documented at the [Khronos site](http://www.khronos.org/registry/cl/specs/opencl-cplusplus-1.2.pdf).
 
 Add the include at the top of `src/your_login/step_world_v3_opencl.cpp`:
 
@@ -1366,26 +1383,30 @@ declarations, and modify them to:
 There is a lot going on here, so to summarise what the program should
 now look like, it should be something like:
 
-    Create buffState : read only
-	Create buffProperties, buffBuffer : read/write
-	
-	Create kernel
-	Set inner, outer, and properties arguments
-	
-	write properties data to buffProperties
-	
-	write initial state to buffState
-	
-	for(t = 0 .. n-1){
-	   Set state argument to buffState
-	   Set output argument to buffBuffer
-	   
-	   enqueue kernel
-	   
-	   barrier
-	   
-	   swap(buffState, buffBuffer);
-	}
+``` text
+Create buffState : read only
+Create buffProperties, buffBuffer : read/write
+
+Create kernel
+Set inner, outer, and properties arguments
+
+write properties data to buffProperties
+
+write initial state to buffState
+
+for t = 0 .. n-1) begin
+   Set state argument to buffState
+   Set output argument to buffBuffer
+   
+   enqueue kernel
+   
+   barrier
+   
+   swap(buffState, buffBuffer);
+end
+
+read buffState into output
+```
 	
 You may find it confusing due to the abstraction of
 the `cl::Buffer`, but it helps if you think of them
@@ -1402,6 +1423,7 @@ for n=2 is:
 	// loop iteration t=0
 	// buffState==0x4000, buffBuffer==0x8000
 	
+	// Reading from 0x4000, writing to 0x8000
 	kernel(..., input = buffState (0x4000), output = buffBuffer (0x8000))
 	
 	swap(buffState, buffBuffer); // swaps the values of the pointers
@@ -1409,6 +1431,7 @@ for n=2 is:
 	// loop iteration t=1
 	// buffState==0x8000, buffBuffer==0x4000
 	
+	// reading from 0x8000, writing to 0x4000
 	kernel(..., input = buffState (0x8000), output = buffBuffer (0x4000))
 	
 	swap(buffState, buffBuffer);
@@ -1482,7 +1505,7 @@ create a temporary array in host memory:
 	std::vector<uint32_t> packed(w*h, 0);
 
 and fill it with the appropriate bits. This will involve looping over all
-the co-ordinates, following the following process at each (x,y) co-ordinate:
+the co-ordinates, using the following process at each (x,y) co-ordinate:
 
 	packed(x,y) = world.properties(x,y)
     if cell(x,y) is normal:
@@ -1492,15 +1515,39 @@ the co-ordinates, following the following process at each (x,y) co-ordinate:
 			packed(x,y) = packed(x,y) + 8
 		# Handle left and right cases
 
-This process takes some time (though it could be paralellised), but we
+This process takes some time (though it could be parallellised), but we
 don't care too much, as it only happens once for multiple time loops.
 Once the array is prepared, it can be transferred to the
 GPU instead of the properties array.
 
 This got my laptop up to about 2.5x speedup, so faster than the two
-cores in my device can go. On a machine with a research-level GPU,
-I was seeing 100x speed-up over the original sequential C++ code
-(compiled with optimisations turned on).
+cores in my device can go. On an AWS GPU instance I looked at a 5000x5000
+grid, stepped over 1000 time steps, which is more at the resolution
+we typically use:
+
+	time (bin/make_world 5000 0.1 1 | bin/step_world 0.1 1000 1 > /dev/null)
+	time (bin/make_world 5000 0.1 1 | bin/dt10/step_world_v3_opencl 0.1 1000 1 > /dev/null)
+	time (bin/make_world 5000 0.1 1 | bin/dt10/step_world_v4_double_buffered 0.1 1000 1 > /dev/null)
+	time (bin/make_world 5000 0.1 1 | bin/dt10/step_world_v5_packed_properties 0.1 1000 1 > /dev/null)
+	
+For my code, I found:
+
+Method     | time (secs)   | speedup (total) | speedup (incremental)
+-------------------------------------------------------------------
+software   |         164.6 |           1.0   |                  1.0
+opencl     |          66.2 |           2.5   |                  2.5
+doublebuff |           9.0 |          18.3   |                  7.5
+packing    |           6.5 |          25.3   |                  1.4
+	
+
+I strongly encourage you to also try the software OpenCL provider.
+The AWS GPU instance has both a GPU and software provider installed
+(though irritatingly they both just show up as "NVIDIA Corporation"),
+and you can use `HPCE_SELECT_PLATFORM` to choose which one you
+want. The GPU instance only has 8 cores, and the code is not
+optimised for CPU-based OpenCL providers, but it should still be
+less than half the time of the original software.
+
 
 Further optimisations
 =====================
@@ -1509,11 +1556,33 @@ In this context of this particular coursework, we won't go
 any further, but the next issue to tackle would be the
 small amount of work being done by each thread. At each
 co-ordinate there are only a handful of operations performed,
-do it would be good to batch up or agglomerate some
+so it would be good to batch up or agglomerate some
 of those operations, to reduce scheduling overhead.
 This agglomeration could be temporal, but partially
 unrolling multiple iterations, or spatial, but grouping
 together consecutive iterations into one larger iteration.
+
+We are also not using shared memory at all, which is wasting
+a precious resource. For this problem we want
+to have all processors working on the same problem, which
+means they need to communicate via global memory and perform
+global barriers (which don't formally exist).  However,
+there are certain locking mechanisms that can be used to
+co-ordinate this, and a hierarchical approach could be used:
+
+- Registers: each thread manages a cluster of pixels (e.g. 16),
+  held locally in registers.
+- Shared: after each time-step each thread exhanges its
+  halo of 16 pixels with its neighbours via shared memory.
+- Global: after each time-step a sub-set of threads exchange
+  a coarser halo via global memory. Assume each thread manages
+  16 pixels, and each workgroup has 256 threads, there would
+  be a total pixel cout of 4096, but the halo drops down to
+  256.
+
+Such an approach would rely on hardware level knowledge
+to avoid deadlock, but is the kind of thing that might
+be done in practise.
 
 Another optimisation is to cache the compiled binary
 for the kernel code. Depending on the device, the run-time,
@@ -1523,18 +1592,15 @@ desktop it takes well under a second, but on my laptop
 it takes around 10 seconds, both using the AMD OpenCL
 implementation. For large numbers of time-steps this
 cost will shrink, but for short-lived programs it is
-a potentially significant cost.
+a potentially significant cost. The NVidia provider
+actually does this by default, so you may see less of
+this effect on such platforms.
 
 Deliverables
 ============
 
-Clean your directory of object files and executables, making sure
-not to delete the .cpp and .cl files. I'd prefer if you left the
-build artefacts (makefiles, projects) in, as it is useful to
-see how you have handled it, but this is not part of the marks.
-
-So you should end up with the following set of files that you have
-created:
+Make sure all your source files are checked into your
+local git repository:
 
 - `src/your_login/step_world_v1_lambda.cpp`
 
@@ -1559,37 +1625,23 @@ numerical differences due to the single-precision arithmetic,
 there should be no major differences in the output over
 time.
 
-Zip up your directory, and submit it via blackboard.
+Also include any useful documents or supporting
+material, your repository does not have to be
+clean. However, your repository should not contain
+compiled artefacts such as executables and object
+files, or other large binary objects.
+
+Push the results up to your private github repository,
+then submit a zipped copy (together with .git) to
+blackboard.
 
 Compatibility patches
 =====================
 
-### OpenCL 1.1 compatibility
-
-A number of platforms provide OpenCL 1.2 development files,
-which means they reject some older constructs like clMemoryBarrier - it's
-an attempt to force people to move to newer APIs. There
-is a pre-processor flag which disables it:
-
-    #define CL_USE_DEPRECATED_OPENCL_1_1_APIS 
-
-which can either be set in the compiler, or added to source
-files. Thanks to Henry Poulton and Robert Bishop for
-pointing out the problem, and the fix.
-
-### Compiling under MacOS
-
-Tony Liu notes that adding the option:
-
-    -framework OpenCL
-
-to your compilation may help when trying to sort out header
-and linker directories.
-
 ### Missing alloca.h
 
 Windows doesn't have a version of <alloca.h>, so if necessary
-just comment it out. Thanks to Henry Poulton.
+just comment it out.
 
 Debugging tips
 ==============
@@ -1615,7 +1667,7 @@ in parallel, after all.
 In NVidia platforms you may be less lucky, as they try to keep
 some functionality CUDA-only for business reasons. However,
 you can always try using a software OpenCL implementation
-for testing purposes. Thanks to Richard Evans.
+for testing purposes.
 
 ### Software implementations
 
@@ -1665,10 +1717,4 @@ take more a few hundred milli-seconds. If you are on a server
 this is less of an issue, but even there you may find that
 the OS aborts kernel calls which take multiple seconds.
 
-### DoC machines with GPUs
 
-Richard Bennett points out that DoC list which machines
-have GPUs available: http://www.doc.ic.ac.uk/csg/facilities/lab/workstations
-
-
-[1] - http://www.khronos.org/registry/cl/specs/opencl-cplusplus-1.2.pdf
