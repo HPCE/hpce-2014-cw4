@@ -1507,16 +1507,16 @@ create a temporary array in host memory:
 and fill it with the appropriate bits. This will involve looping over all
 the co-ordinates, using the following process at each (x,y) co-ordinate:
 
-	packed(x,y) = world.properties(x,y)
+    packed(x,y) = world.properties(x,y)
     if cell(x,y) is normal:
-		if packed(x,y-1)(
-			packed(x,y) = packed(x,y) + 4
-		if packed(x,y+1)(
-			packed(x,y) = packed(x,y) + 8
-		# Handle left and right cases
+        if packed(x,y-1):
+            packed(x,y) = packed(x,y) + 4
+        if packed(x,y+1):
+            packed(x,y) = packed(x,y) + 8
+        # Handle left and right cases
 
 This process takes some time (though it could be parallellised), but we
-don't care too much, as it only happens once for multiple time loops.
+don't care too much, as it only happens once for multiple time iterations.
 Once the array is prepared, it can be transferred to the
 GPU instead of the properties array.
 
@@ -1533,7 +1533,7 @@ we typically use:
 For my code, I found:
 
 Method     | time (secs)   | speedup (total) | speedup (incremental)
--------------------------------------------------------------------
+-----------|---------------|-----------------|---------------------
 software   |         164.6 |           1.0   |                  1.0
 opencl     |          66.2 |           2.5   |                  2.5
 doublebuff |           9.0 |          18.3   |                  7.5
