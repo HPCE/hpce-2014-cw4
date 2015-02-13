@@ -61,6 +61,10 @@ A subset of lab machines on level 5 have OpenCL capable
 GPUs, plus the drivers installed. However, they do not
 have any SDKs.
 
+_Note: some [problems compiling for windows](https://github.com/HPCE/hpce-2014-cw4/issues/2). If
+you're seeing something similar, it would be useful to know what the
+common causes or problems are._
+
 ### Linux
 
 You should be able to get a working OpenCL driver via your
