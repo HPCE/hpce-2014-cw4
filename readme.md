@@ -175,7 +175,7 @@ the cells around them.
 
 Now advance the world by a single time-step of length 0.1 seconds:
 
-	make_world.exe 10 0.1 | step_world 0.1 1
+	make_world 10 0.1 | step_world 0.1 1
 
 You'll see that the the cells next to the heat source row has
 warmed up. The warming is not uniform, as at the far left and
@@ -184,14 +184,14 @@ to the simple model using here, they end up slightly warmer.
 
 You can now advance the world by a few seconds:
 
-	make_world.exe 10 0.1 | step_world 0.1 100
+	make_world 10 0.1 | step_world 0.1 100
 
 You should see that some of the heat is making it's way
 around the right hand side, but it can't come through
 the insulator across the middle-left. Step forward
 by a 1000 seconds:
 
-	make_world.exe 10 0.1 | step_world 0.1 10000
+	make_world 10 0.1 | step_world 0.1 10000
 
 and you'll see the world has largely reached a steady-state,
 with high temperatures around the top, then slowly
@@ -205,14 +205,14 @@ is most accurate when both time and space are very
 fine. To visualise much finer-grain scenarios, it is
 conventient to view it as a bitmap:
 
-	make_world.exe 100 0.1 | step_world 0.1 100 | render_world dump.bmp
+	make_world 100 0.1 | step_world 0.1 100 | render_world dump.bmp
 
 If you look at `dump.bmp`, you should see insulators rendered
 in green, and the temperature shown from blue (0) to red (1). However,
 over a total time of 0.1*100=10 seconds, very little will have happened.
 To see anything happen, you'll need to up the time significantly:
 
-	make_world.exe 100 0.1 | step_world 0.1 100000 | render_world dump.bmp
+	make_world 100 0.1 | step_world 0.1 100000 | render_world dump.bmp
 	
 It is getting fairly slow, even at a resolution of 100x100, but in
 practise we'd like to increase resolution 10x in all three dimensions
