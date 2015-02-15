@@ -11,8 +11,9 @@
 
 // Update: this doesn't work in windows - if necessary take it out. It is in
 // here because some unix platforms complained if it wasn't heere.
-# include <alloca.h>
-
+#ifndef WIN32
+#include <alloca.h>
+#endif
 
 // Update: Work around deprecation warnings
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS 
