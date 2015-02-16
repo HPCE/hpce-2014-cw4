@@ -508,7 +508,7 @@ setting up the OpenCL parts, don't worry too much about
 the data going in and out. You can simply test it using
 something equivalent to:
 
-    bin/make_world | src/your_login/step_world_v3_opencl > /dev/null
+    bin/make_world | bin/step_world_v3_opencl > /dev/null
 
 as for a while we'll just look at stderr.
 
