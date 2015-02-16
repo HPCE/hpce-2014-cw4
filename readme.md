@@ -92,6 +92,10 @@ Apparently, adding the option:
 to your compilation may help when trying to sort out header
 and linker directories.
 
+_Note: Various contributors have suggestions for getting
+[compilation working](https://github.com/HPCE/hpce-2014-cw4/issues/4)
+under OSX._
+
 ### AWS
 
 I've created an image for AWS which has OpenCL set up,
