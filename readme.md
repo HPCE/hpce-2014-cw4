@@ -47,6 +47,11 @@ the headers and libraries you need to compile your programs;
 and the OpenCL run-time, which provides access to the
 underlying compute resource.
 
+### Cross-platform
+
+@farrell236 was nice enough to contribute the [CMakeLists.txt](CMakeLists.txt),
+which is a way of getting [cross-platform builds with CMake](https://github.com/HPCE/hpce-2014-cw4/issues/5).
+
 ### Windows
 
 There are a number of SDKs available that can be downloaded,
