@@ -99,7 +99,8 @@ both for software and the GPU. The title of the image
 is `HPCE-2014-GPU-Image`, which can be selected when
 you launch an AWS instance. The steps for reproducing
 are [available](aws_setup.md), but it isn't much fun
-recreating it.
+recreating it. @schmethan suggests also installing
+`eog` and `libcanberra-gtk3-module` for viewing images.
 
 ### Debugging
 
