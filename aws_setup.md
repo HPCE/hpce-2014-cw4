@@ -19,3 +19,4 @@ sudo apt-get -y install nvidia-driver
 
 sudo reboot
 ```
+@schmethan suggests also installing `eog` and `libcanberra-gtk3-module` for viewing images.
