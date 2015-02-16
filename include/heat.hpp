@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdint>
+#include <algorithm>
+#include <string>
 
 namespace hpce{
 	
