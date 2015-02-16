@@ -677,7 +677,7 @@ re-compiling:
 	Found 2 devices
 	  Device 0 : Caicos
 	  Device 1 :         Intel(R) Core(TM) i7-2600 CPU @ 3.40GHz
-	Choosing device 1
+	Choosing device 0
 
 	dt10@TOTO /cygdrive/e/_dt10_/documents/teaching/2014/hpce/cw/CW4
 	$ export HPCE_SELECT_DEVICE=1
