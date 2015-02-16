@@ -101,6 +101,11 @@ you launch an AWS instance. The steps for reproducing
 are [available](aws_setup.md), but it isn't much fun
 recreating it.
 
+### Debugging
+
+@kronocharia has [some suggestions](https://github.com/HPCE/hpce-2014-cw4/issues/6) on how
+to debug programs which are part of a pipeline.
+
 The Heat World code
 ===================
 
