@@ -203,7 +203,7 @@ at very high spatial resolutions (i.e. lots of cells),
 and very fine temporal resolutions. This sort of discretisation
 is most accurate when both time and space are very
 fine. To visualise much finer-grain scenarios, it is
-conventient to view it as a bitmap:
+convenient to view it as a bitmap:
 
 	make_world.exe 100 0.1 | step_world 0.1 100 | render_world dump.bmp
 
@@ -221,7 +221,7 @@ a factor of 1000.
 
 This type of computation is ideal for a GPU, as it maps very
 well to the grid-structure provided by both the hardware
-and the progamming model.
+and the programming model.
 
 Preparing the code for OpenCL
 =============================
@@ -502,7 +502,7 @@ GPU kernel. We'll do all this in a file called
 `src/your_login/step_world_v3_opencl.cpp`, with
 a function called `src::your_login::StepWorldV3OpenCL`.
 
-Create the new file based on the `src/your_login/step_world_v2_function.cpp' code,
+Create the new file based on the `src/your_login/step_world_v2_function.cpp` code,
 and check you can still build and run it. While we're
 setting up the OpenCL parts, don't worry too much about
 the data going in and out. You can simply test it using
@@ -597,7 +597,7 @@ file, but we'll do it by an environment variable:
 	cl::Platform platform=platforms.at(selectedPlatform);    
 
 This means that by default it will select the first platform,
-but if we change an evironment variable (e.g. `export HPCE_SELECT_PLATFORM=1`
+but if we change an environment variable (e.g. `export HPCE_SELECT_PLATFORM=1`
 in bash), then the executable will do something different.
 While not as good as a configuration file, this makes it
 possible to select what happens _without_ recompiling. Again,
