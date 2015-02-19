@@ -492,8 +492,8 @@ numbers or pointers to arrays.
 Test the function to make sure it still works. If so, we
 are now in a position to map it into a CPU kernel.
 
-Intial conversion to OpenCL
-===========================
+Initial conversion to OpenCL (v3)
+=================================
 
 We've now got a version of the code which has
 separated the computationally intensive part out
@@ -1299,8 +1299,8 @@ So what is wrong? We have a number of problems here:
 	private and shared memory as well.
 	
 
-Optimising memory accesses
-==========================
+Optimising CPU to GPU transfers (v4)
+===========================================
 
 The first thing to try is to remove the redundant memory copies: if you look at
 `StepWorldV3OpenCL` the enqueue read at the bottom of the time loop
@@ -1468,8 +1468,8 @@ Depending on your platform, you may now start to see a reasonable
 speed-up over software (though probably still not over TBB).
 
 
-Optimising memory accesses
-==================
+Optimising global to GPU memory accesses (v5)
+=============================================
 
 One of the biggest problems in GPU programming is managing the different memory
 spaces. Slight differences in memory layout can cause large changes in
@@ -1498,6 +1498,9 @@ bits.
 
 ### Kernel code
 
+Create a new kernel called `src/src/your_login/step_world_v5_packed_properties.cl`
+based on the v4 kernel.
+
 At the top of the code, read the properties for the current cell into
 a private uint variable. This value will be read once into fast private
 memory, and then from then on it can be accessed very cheaply.
@@ -1515,6 +1518,9 @@ above is an insulator, the first branch could be re-written to:
 The other neighbours will need to depend on different bits in the properties.
 
 ### Host code
+
+Create a new implementation called `src/src/your_login/step_world_v5_packed_properties.cpp`
+based on the v4 host code.
 
 In the host code, you need to make sure the the correct flags have
 been inserted into the properties buffer. This should only have local
